@@ -1,5 +1,7 @@
 # Portable · Chat-mode Playwright Browser QA
 
+**English | [中文](README.zh-CN.md)**
+
 A reusable GitHub Actions + Playwright kit for giving ordinary Chat workflows a deterministic browser QA loop.
 
 ## Included structure

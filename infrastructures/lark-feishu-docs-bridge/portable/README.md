@@ -1,5 +1,7 @@
 # Portable Lark / Feishu bridge configuration
 
+**English | [中文](README.zh-CN.md)**
+
 This directory is the public migration/configuration layer for adapting a private Lark/Feishu bridge implementation to a new environment.
 
 Parameterize at least:

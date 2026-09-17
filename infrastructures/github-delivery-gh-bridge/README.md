@@ -1,12 +1,17 @@
 # GitHub delivery bridge
 
+**English | [中文](README.zh-CN.md)**
+
 Reusable scripts and templates for completing repository-delivery workflows with GitHub CLI: preflight checks, authentication verification, prerelease publication, and related release operations.
 
 This public snapshot excludes project-specific release evidence, private repository provenance, real tags/releases used for validation, and environment-bound status records.
 
 ## Usage guide
 
-For the complete setup from local Git/`gh` authentication through frozen commit, annotated tag, PR, Pre-release, read-back verification, plus the boundary between manual Chat mode and an integrated controlled runner, see [`USAGE_GUIDE.md`](USAGE_GUIDE.md).
+For the complete setup from local Git/`gh` authentication through frozen commit, annotated tag, PR, Pre-release, read-back verification, plus the boundary between manual Chat mode and an integrated controlled runner, see:
+
+- [English](USAGE_GUIDE.md)
+- [中文](USAGE_GUIDE.zh-CN.md)
 
 ## Included
 

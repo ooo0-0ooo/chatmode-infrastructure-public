@@ -1,5 +1,7 @@
 # Security and publication boundary
 
+**English | [中文](SECURITY.zh-CN.md)**
+
 This public-source snapshot must remain separate from private runtime state.
 
 ## Never commit to the public source repository

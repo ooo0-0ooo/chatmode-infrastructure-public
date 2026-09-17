@@ -1,5 +1,7 @@
 # GitHub Delivery Bridge — Chat Mode Usage Guide
 
+**English | [中文](USAGE_GUIDE.zh-CN.md)**
+
 > **Rights notice:** this repository has no open-source license. This guide explains how an authorized user can operate the infrastructure. It does not grant permission to reuse, modify, redistribute, or commercialize the source.
 
 ## What this package is
@@ -110,7 +112,7 @@ gh repo view OWNER/REPO
 Then run the included read-only helper:
 
 ```powershell
-.\scriptserify-gh.ps1 -Repo OWNER/REPO
+./scripts/verify-gh.ps1 -Repo OWNER/REPO
 ```
 
 The helper checks:
@@ -183,7 +185,7 @@ git show --no-patch --oneline <FULL_COMMIT_SHA>
 Before creating a tag or release, run:
 
 ```powershell
-.\scriptselease-preflight.ps1 `
+./scripts/release-preflight.ps1 `
   -Repo OWNER/REPO `
   -Tag YOUR_TAG `
   -Commit FULL_COMMIT_SHA
@@ -327,10 +329,10 @@ A GitHub Release body is governance metadata. It must not be used to quietly red
 The provided `publish-prerelease.ps1` uses PowerShell `SupportsShouldProcess`, so you can inspect the intended operation with `-WhatIf` first:
 
 ```powershell
-.\scripts\publish-prerelease.ps1 `
+./scripts/publish-prerelease.ps1 `
   -Repo OWNER/REPO `
   -Tag YOUR_TAG `
-  -NotesFile .\RELEASE_NOTES.md `
+  -NotesFile ./RELEASE_NOTES.md `
   -Title "YOUR_TAG" `
   -WhatIf
 ```
@@ -354,10 +356,10 @@ It intentionally refuses to silently overwrite an existing Release.
 After the preflight and `-WhatIf` output are correct, run:
 
 ```powershell
-.\scripts\publish-prerelease.ps1 `
+./scripts/publish-prerelease.ps1 `
   -Repo OWNER/REPO `
   -Tag YOUR_TAG `
-  -NotesFile .\RELEASE_NOTES.md `
+  -NotesFile ./RELEASE_NOTES.md `
   -Title "YOUR_TAG"
 ```
 
@@ -408,7 +410,7 @@ If only the Release notes need correction, edit the Release metadata without mov
 ```powershell
 gh release edit YOUR_TAG `
   --repo OWNER/REPO `
-  --notes-file .\RELEASE_NOTES.md
+  --notes-file ./RELEASE_NOTES.md
 ```
 
 ---
@@ -521,9 +523,7 @@ This captures the important safety/governance behavior without requiring the use
 
 ### `verify-gh.ps1`
 
-Read-only.
-
-It verifies:
+Read-only. It verifies:
 
 ```text
 GitHub CLI installed
@@ -533,9 +533,7 @@ target repository accessible
 
 ### `release-preflight.ps1`
 
-Read-only.
-
-It verifies:
+Read-only. It verifies:
 
 ```text
 GitHub authentication
@@ -548,9 +546,7 @@ tag conflicts locally/remotely
 
 ### `publish-prerelease.ps1`
 
-Mutating.
-
-It:
+Mutating. It:
 
 ```text
 checks notes file
@@ -604,19 +600,11 @@ and verify you authenticated the correct GitHub account/host.
 
 ### `gh repo view OWNER/REPO` fails
 
-Check:
-
-- repository name;
-- account permissions;
-- organization SSO authorization;
-- private-repository access;
-- whether you are authenticated to the correct GitHub host.
+Check repository name, account permissions, organization SSO authorization, private-repository access, and GitHub host.
 
 ### Preflight says the tag already exists
 
-Stop and inspect the existing tag. Do not reuse or move it simply because you wanted the same name.
-
-Choose the correct project-governance action: use the existing frozen version if it is correct, or create a new version/tag.
+Stop and inspect the existing tag. Do not reuse or move it simply because you wanted the same name. Use the existing frozen version if it is correct, or create a new version/tag according to project governance.
 
 ### `publish-prerelease.ps1` says the remote tag does not exist
 
