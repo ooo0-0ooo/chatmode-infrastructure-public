@@ -38,3 +38,8 @@ See [`SECURITY.md`](SECURITY.md) before adapting any kit for production use. [ä¸
 ## License
 
 No open-source license is granted by this snapshot. Publication makes the source viewable; it does not grant permission to copy, modify, redistribute, commercialize, or incorporate the source into another product. Any additional rights require explicit permission from the copyright holder.
+
+
+## Support / Sponsor
+
+If this project is useful to you, you can [support my work with crypto](https://github.com/ooo0-0ooo/ooo0-0ooo/blob/main/SUPPORT.md). Contributions are voluntary; check the token, network, and address before sending.
