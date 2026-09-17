@@ -1,0 +1,180 @@
+name: Chat-mode Browser QA
+
+on:
+  pull_request:
+  workflow_dispatch:
+    inputs:
+      target_url:
+        description: Optional accessible deployment URL. Leave blank to build and test this commit locally.
+        required: false
+        type: string
+        default: ""
+      baseline_ref:
+        description: Immutable accepted ref used for the browser regression baseline. Overrides CHATMODE_QA_BASELINE_REF.
+        required: false
+        type: string
+        default: ""
+
+permissions:
+  contents: read
+
+concurrency:
+  group: chatmode-browser-qa-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  browser-qa:
+    name: Chromium visual + runtime gates
+    runs-on: ubuntu-24.04
+    timeout-minutes: 40
+    env:
+      DEFAULT_BASELINE_REF: ${{ vars.CHATMODE_QA_BASELINE_REF }}
+
+    steps:
+      - name: Resolve immutable browser baseline ref
+        shell: bash
+        env:
+          DISPATCH_BASELINE: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.baseline_ref || '' }}
+        run: |
+          baseline="$DISPATCH_BASELINE"
+          if [ -z "$baseline" ]; then baseline="$DEFAULT_BASELINE_REF"; fi
+          if [ -z "$baseline" ]; then
+            echo "Missing immutable baseline ref. Set repository variable CHATMODE_QA_BASELINE_REF or workflow_dispatch baseline_ref." >&2
+            exit 1
+          fi
+          echo "CHATMODE_QA_BASELINE_REF=$baseline" >> "$GITHUB_ENV"
+
+      - name: Checkout candidate source
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
+          fetch-depth: 0
+
+      - name: Checkout immutable browser baseline source
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ env.CHATMODE_QA_BASELINE_REF }}
+          path: .chatmode-browser-baseline-source
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10
+          run_install: false
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Verify development branch policy
+        run: node scripts/verify-development-branch-policy.mjs
+
+      - name: Install candidate dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Type check when script exists
+        shell: bash
+        run: |
+          if node -e 'const p=require("./package.json"); process.exit(p.scripts?.typecheck ? 0 : 1)'; then pnpm run typecheck; else echo "No typecheck script; skipped"; fi
+
+      - name: Lint when script exists
+        shell: bash
+        run: |
+          if node -e 'const p=require("./package.json"); process.exit(p.scripts?.lint ? 0 : 1)'; then pnpm run lint; else echo "No lint script; skipped"; fi
+
+      - name: Verify calculations when script exists
+        shell: bash
+        run: |
+          if node -e 'const p=require("./package.json"); process.exit(p.scripts?.["verify:calculations"] ? 0 : 1)'; then pnpm run verify:calculations; else echo "No verify:calculations script; skipped"; fi
+
+      - name: Build candidate production app
+        if: ${{ github.event_name != 'workflow_dispatch' || github.event.inputs.target_url == '' }}
+        run: pnpm run build
+
+      - name: Install pinned browser QA runtime
+        run: |
+          pnpm add --save-dev --lockfile=false playwright@1.55.0 pixelmatch@7.1.0 pngjs@7.0.0
+          pnpm exec playwright install --with-deps chromium
+
+      - name: Install baseline dependencies
+        working-directory: .chatmode-browser-baseline-source
+        run: pnpm install --frozen-lockfile
+
+      - name: Build immutable browser baseline
+        working-directory: .chatmode-browser-baseline-source
+        run: pnpm run build
+
+      - name: Install baseline browser QA runtime
+        working-directory: .chatmode-browser-baseline-source
+        run: pnpm add --save-dev --lockfile=false playwright@1.55.0 pixelmatch@7.1.0 pngjs@7.0.0
+
+      - name: Start immutable browser baseline server
+        shell: bash
+        run: |
+          cd .chatmode-browser-baseline-source
+          PORT=3001 nohup pnpm run start > /tmp/chatmode-baseline.log 2>&1 &
+          echo $! > /tmp/chatmode-baseline.pid
+          for attempt in $(seq 1 60); do
+            if curl --fail --silent --show-error http://127.0.0.1:3001/ > /dev/null; then exit 0; fi
+            sleep 1
+          done
+          cat /tmp/chatmode-baseline.log
+          exit 1
+
+      - name: Capture immutable Chromium baseline
+        working-directory: .chatmode-browser-baseline-source
+        env:
+          CHATMODE_QA_MODE: capture
+          CHATMODE_QA_ORIGIN: http://127.0.0.1:3001
+          CHATMODE_QA_OUTPUT_DIR: qa/chatmode-browser-qa/browser-baseline-runtime
+        run: node qa/chatmode-browser-qa/run-visual-qa.mjs
+
+      - name: Start candidate local production server
+        if: ${{ github.event_name != 'workflow_dispatch' || github.event.inputs.target_url == '' }}
+        shell: bash
+        run: |
+          PORT=3000 nohup pnpm run start > /tmp/chatmode-candidate.log 2>&1 &
+          echo $! > /tmp/chatmode-candidate.pid
+          for attempt in $(seq 1 60); do
+            if curl --fail --silent --show-error http://127.0.0.1:3000/ > /dev/null; then
+              echo "CHATMODE_QA_ORIGIN=http://127.0.0.1:3000" >> "$GITHUB_ENV"
+              exit 0
+            fi
+            sleep 1
+          done
+          cat /tmp/chatmode-candidate.log
+          exit 1
+
+      - name: Use requested deployment target
+        if: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.target_url != '' }}
+        shell: bash
+        env:
+          TARGET_URL: ${{ github.event.inputs.target_url }}
+        run: echo "CHATMODE_QA_ORIGIN=${TARGET_URL%/}" >> "$GITHUB_ENV"
+
+      - name: Run Playwright browser QA
+        env:
+          CHATMODE_QA_BROWSER_BASELINE_DIR: qa/chatmode-browser-qa/browser-baseline-runtime/actual
+        run: node qa/chatmode-browser-qa/run-visual-qa.mjs
+
+      - name: Show server logs on failure
+        if: failure()
+        shell: bash
+        run: |
+          echo "--- baseline server ---"
+          cat /tmp/chatmode-baseline.log || true
+          echo "--- candidate server ---"
+          cat /tmp/chatmode-candidate.log || true
+
+      - name: Upload browser QA evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: chatmode-browser-qa-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            qa/chatmode-browser-qa/output/
+            .chatmode-browser-baseline-source/qa/chatmode-browser-qa/browser-baseline-runtime/
+          if-no-files-found: warn
+          retention-days: 30

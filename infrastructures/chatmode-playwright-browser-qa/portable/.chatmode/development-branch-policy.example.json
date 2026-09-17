@@ -1,0 +1,24 @@
+{
+  "schemaVersion": 1,
+  "rollingDevelopmentBase": "infra/chatmode-browser-qa",
+  "initialProductBaseline": "acceptance-r1",
+  "frozenAcceptanceBranchPattern": "^acceptance-r\\d+(?:-[a-z0-9-]+)?$",
+  "requiredInheritedPaths": [
+    ".github/workflows/chatmode-browser-qa.yml",
+    ".chatmode/development-branch-policy.json",
+    "scripts/create-development-branch.mjs",
+    "scripts/verify-development-branch-policy.mjs",
+    "scripts/advance-development-base.mjs",
+    "qa/chatmode-browser-qa/run-visual-qa.mjs",
+    "qa/chatmode-browser-qa/visual-references.json",
+    "qa/chatmode-browser-qa/project-adapter.mjs"
+  ],
+  "rules": {
+    "newRoundMustStartFromRollingDevelopmentBase": true,
+    "continueExistingUnfrozenRoundBranch": true,
+    "neverDevelopDirectlyOnFrozenAcceptanceBranch": true,
+    "neverUseMainAsNewRoundProductBaseline": true,
+    "advanceRollingDevelopmentBaseAfterFormalFreeze": "fast-forward-only",
+    "forceUpdateRollingDevelopmentBase": false
+  }
+}

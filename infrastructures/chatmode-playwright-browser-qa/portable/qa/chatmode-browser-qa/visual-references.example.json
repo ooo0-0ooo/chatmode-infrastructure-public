@@ -1,0 +1,56 @@
+{
+  "fixtureTime": "2026-01-15T12:00:00.000Z",
+  "viewport": {
+    "width": 1440,
+    "height": 1000,
+    "deviceScaleFactor": 1,
+    "colorScheme": "light"
+  },
+  "ignoreRuntimeUrlPatterns": [
+    "/favicon.ico",
+    "/_vercel/"
+  ],
+  "cases": [
+    {
+      "id": "home-en-mobile",
+      "path": "/home",
+      "state": {
+        "locale": "en",
+        "auth": "existing-test-user"
+      },
+      "capture": {
+        "mode": "selector",
+        "selector": "[data-qa-shell]",
+        "padding": 0
+      },
+      "reference": "qa/references/home-en-mobile.png"
+    },
+    {
+      "id": "settings-dialog-zh",
+      "path": "/settings",
+      "state": {
+        "locale": "zh",
+        "auth": "existing-test-user",
+        "dialog": "example"
+      },
+      "capture": {
+        "mode": "selector",
+        "selector": "[role='dialog']",
+        "padding": 4
+      },
+      "reference": "qa/references/settings-dialog-zh.png"
+    },
+    {
+      "id": "responsive-full-page",
+      "path": "/",
+      "state": {
+        "locale": "en",
+        "auth": "anonymous"
+      },
+      "capture": {
+        "mode": "page",
+        "fullPage": true
+      }
+    }
+  ]
+}

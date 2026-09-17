@@ -1,0 +1,8 @@
+{
+  "scripts": {
+    "branch:new": "node scripts/create-development-branch.mjs",
+    "branch:verify": "node scripts/verify-development-branch-policy.mjs",
+    "branch:advance-base": "node scripts/advance-development-base.mjs",
+    "qa:browser": "node qa/chatmode-browser-qa/run-visual-qa.mjs"
+  }
+}

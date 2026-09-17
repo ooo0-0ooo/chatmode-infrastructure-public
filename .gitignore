@@ -1,0 +1,18 @@
+# Local secrets
+.env
+.env.*
+!.env.example
+
+# Runtime state / logs
+*.log
+*.lock
+runtime/
+assets/
+artifacts/
+ops-assets/
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
