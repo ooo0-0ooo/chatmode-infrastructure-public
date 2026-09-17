@@ -4,6 +4,10 @@ This directory describes the portable/public boundary of a Chat-mode bridge for 
 
 The private implementation may use a GitHub mailbox plus a local watcher to invoke authenticated Lark tooling. The public snapshot deliberately excludes verified production watchers, real runtime branches, request/response state, OAuth state, binary assets, and project-specific provenance.
 
+## Usage guide
+
+For the complete path from this public source to a working bridge in your own ordinary ChatGPT Chat, including the private runtime repository, local dependencies, Lark App/OAuth, mailbox contract, watcher/supervisor, binary transport, first-hop Chat instruction, and smoke tests, see [`USAGE_GUIDE.md`](USAGE_GUIDE.md).
+
 ## Publicly shareable material
 
 - generalized architecture and migration guidance;
