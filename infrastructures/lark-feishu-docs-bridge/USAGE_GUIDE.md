@@ -237,7 +237,30 @@ Do not treat a successful login page as proof that the required scope is actuall
 Start from:
 
 ```text
-portable/.env.example
+LARK_BRIDGE_REPO=YOUR_ACCOUNT/lark-chat-bridge-runtime
+LARK_BRIDGE_BRANCH=runtime
+LARK_BRIDGE_ASSET_BRANCH=assets
+
+LARK_BRIDGE_SOURCE_REPO=YOUR_ACCOUNT/lark-chat-bridge-runtime
+LARK_BRIDGE_SOURCE_BRANCH=runtime
+
+LARK_BRIDGE_V2_OPS_REQUEST_PATH=bridge/v2/ops-request.json
+LARK_BRIDGE_V2_OPS_RESPONSE_PATH=bridge/v2/ops-response.json
+LARK_BRIDGE_V2_AUTH_REQUEST_PATH=bridge/v2/auth-request.json
+LARK_BRIDGE_V2_AUTH_RESPONSE_PATH=bridge/v2/auth-response.json
+
+GH_PATH=gh
+LARK_CLI_PATH=C:\\path\\to\\lark-cli.exe
+
+LARK_BRIDGE_POLL_MS=5000
+LARK_BRIDGE_OPS_MAX_OUTPUT=900000
+LARK_BRIDGE_ASSET_CHUNK_CHARS=48000
+
+LARK_BRIDGE_AUTH_KEEPALIVE_CHECK_MS=21600000
+LARK_BRIDGE_AUTH_KEEPALIVE_REFRESH_BEFORE_MS=259200000
+LARK_BRIDGE_AUTH_KEEPALIVE_INITIAL_DELAY_MS=30000
+
+LARK_BRIDGE_LOCAL_DIR=C:\\lark-chat-bridge
 ```
 
 Copy it into your private runtime environment as `.env` or equivalent secret/config storage.
