@@ -13,6 +13,7 @@
 - `supervisor-v2.mjs`
 - `startup.mjs`
 - `install-v2.mjs`
+- `activate-latest-v2.cmd`
 
 修复后的 auth watcher 包含：
 
