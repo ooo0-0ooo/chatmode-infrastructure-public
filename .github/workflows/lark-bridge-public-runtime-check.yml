@@ -1,0 +1,67 @@
+name: Lark bridge public runtime checks
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "infrastructures/lark-feishu-docs-bridge/runtime/**"
+      - "infrastructures/lark-feishu-docs-bridge/bridge/**"
+      - "infrastructures/lark-feishu-docs-bridge/portable/**"
+      - ".github/workflows/lark-bridge-public-runtime-check.yml"
+  pull_request:
+    paths:
+      - "infrastructures/lark-feishu-docs-bridge/runtime/**"
+      - "infrastructures/lark-feishu-docs-bridge/bridge/**"
+      - "infrastructures/lark-feishu-docs-bridge/portable/**"
+      - ".github/workflows/lark-bridge-public-runtime-check.yml"
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Check runtime syntax
+        shell: bash
+        run: |
+          set -euo pipefail
+          for f in infrastructures/lark-feishu-docs-bridge/runtime/*.mjs; do
+            node --check "$f"
+          done
+
+      - name: Check repaired OAuth invariants
+        shell: bash
+        run: |
+          set -euo pipefail
+          f="infrastructures/lark-feishu-docs-bridge/runtime/auth-watcher-v2.mjs"
+          grep -q "auth.finish_pending" "$f"
+          grep -q "AUTH_SESSION_PATH" "$f"
+          grep -q "runKeepalive('timer')" "$f"
+          grep -q "KEEPALIVE_REFRESH_BEFORE_MS" "$f"
+          if grep -q "operation === 'auth.finish'" "$f"; then
+            echo "legacy auth.finish(device_code) path must not be present"
+            exit 1
+          fi
+
+      - name: Check public sanitization
+        shell: bash
+        run: |
+          set -euo pipefail
+          root="infrastructures/lark-feishu-docs-bridge"
+          blocked=(
+            "ooo0-0ooo/span-mvp"
+            "MArCbyc7ImBMOenzgFelu18rgVg"
+            "DdVAbCDaimKx45nu7Ccu1Xdqsgg"
+            "ou_c5536b6d28d0d76c295747cd97c9bc8d"
+            "cli_aa06ffc9cbb95ee9"
+            "D:\\span-lark-github-bridge"
+          )
+          for needle in "${blocked[@]}"; do
+            if grep -R -F -n --exclude-dir=.git "$needle" "$root"; then
+              echo "blocked private identifier found: $needle"
+              exit 1
+            fi
+          done
