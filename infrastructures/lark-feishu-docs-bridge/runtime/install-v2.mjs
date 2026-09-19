@@ -4,7 +4,7 @@ import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const REPO = process.env.LARK_BRIDGE_SOURCE_REPO || process.env.LARK_BRIDGE_REPO || 'your-account/your-private-runtime-repo';
-const BRANCH = process.env.LARK_BRIDGE_SOURCE_BRANCH || process.env.LARK_BRIDGE_BRANCH || 'runtime';
+const BRANCH = process.env.LARK_BRIDGE_SOURCE_BRANCH || 'main';
 const DEFAULT_TARGET = process.env.LARK_BRIDGE_LOCAL_DIR || 'C:\\lark-chat-bridge';
 const SELF_DIR = dirname(fileURLToPath(import.meta.url));
 const TARGET = process.env.LARK_BRIDGE_LOCAL_DIR || DEFAULT_TARGET;
