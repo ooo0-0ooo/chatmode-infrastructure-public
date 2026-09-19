@@ -4,11 +4,11 @@
 
 ## What this public folder gives you
 
-This public folder is a **deployment and integration guide**, not a complete one-command runtime.
+This public folder now includes a **sanitized runtime implementation plus deployment/integration guidance**.
 
-It contains the public architecture boundary and a parameterized `.env.example`, but intentionally does **not** publish the private production watcher implementation, live mailbox state, OAuth material, binary-asset transport state, or verified environment-bound runtime.
+The repaired watcher/supervisor source is published under `runtime/`; environment-specific defaults, live mailbox state, OAuth material, private binary assets, document/user/app identifiers, and production provenance remain excluded.
 
-To make the bridge actually usable from your own ordinary ChatGPT Chat, you need a **compatible private runtime** that implements the contracts described below. That runtime can be your own implementation or another implementation you are authorized to use.
+To use the bridge from an ordinary ChatGPT Chat, deploy the sanitized runtime into a **private runtime repository/backend** and configure it with your own GitHub/Lark environment. Do not use this public repository itself as the live mailbox for private Lark data.
 
 The intended end state is:
 
@@ -115,7 +115,7 @@ bridge/
     lark-bridge-artifact-carrier.yml
 ```
 
-The public repository does not provide the private watcher files above. Your compatible runtime must provide them.
+Copy the sanitized watcher/supervisor files from `runtime/` into the private repository's `bridge/client/` directory. Keep all live mailbox traffic and OAuth state private.
 
 A practical branch model is:
 
@@ -320,30 +320,51 @@ The watcher should also:
 
 Do not expose unrestricted `auth`, `config`, `install`, or shell commands through the normal ops watcher.
 
-A separate auth watcher should expose a small typed surface such as:
+The repaired auth watcher exposes a small typed surface:
 
 ```text
 auth.status
 auth.scopes
 auth.start
 auth.start_all
-auth.finish
+auth.finish_pending
+auth.health
+auth.keepalive
 ```
 
-A normal OAuth recovery flow is:
+### OAuth recovery
+
+Current flow:
 
 ```text
 Chat detects invalid/missing user token
   -> auth.start / auth.start_all
-  -> runtime returns the official Lark verification URL
+  -> local host stores the Lark device_code locally
+  -> runtime returns only the official verification_url + opaque auth_session_id
   -> user completes authorization in browser
   -> user tells Chat authorization is complete
-  -> Chat sends auth.finish
-  -> runtime verifies token and real scopes
+  -> Chat sends auth.finish_pending(auth_session_id)
+  -> local host completes the device-code exchange
+  -> local pending OAuth secret is deleted
+  -> auth.status verifies the real token and scopes
   -> original document task resumes
 ```
 
-Do not store device-code history in Git.
+Never return the raw `device_code` to Chat or write it into Git. The old `auth.finish(device_code)` mailbox contract should not be used.
+
+### Token lifecycle keeper
+
+The repaired reference runtime checks local token metadata periodically. Its default policy is:
+
+- check every 6 hours;
+- when the access token needs refresh and the rotating refresh token is within 72 hours of expiry, trigger the normal verified Lark CLI refresh path locally;
+- keep access/refresh token material on the host.
+
+This prevents a long idle period from silently expiring the rotating refresh-token chain while the host is still running.
+
+If the host itself is powered off/offline longer than the upstream refresh-token lifetime, a new browser OAuth may still be required.
+
+Do not treat a successful browser authorization page as proof that the local host has completed token exchange. Verify with `auth.status`.
 
 ---
 
@@ -574,10 +595,28 @@ Check supervisor restart behavior, lock handling, unhandled exceptions, and whet
 
 This public package is currently best described as:
 
-**public deployment specification + parameterized configuration layer**
+**sanitized runtime source + deployment specification + parameterized configuration layer**
 
-It is **not** yet:
+It now includes the repaired watcher/supervisor runtime and installer source, but it is still **not a public live service** and must not be used as a mailbox for private Lark data.
 
-**clone → run installer → fully working Lark bridge**
+To deploy it, copy the runtime source into a private runtime repository, configure your own GitHub/Lark environment, create private mailbox files, and complete your own OAuth and smoke tests.
 
-The missing piece is a fully generalized, environment-independent runtime implementation and installer. Until that exists in an authorized distribution, you must provide or implement a compatible private runtime yourself.
+
+---
+
+## 17. September 2026 OAuth lifecycle repair
+
+The current public runtime reflects a production repair completed after a long-idle OAuth failure.
+
+The repair addressed:
+
+- lazy-only refresh that allowed the rotating refresh token to expire during prolonged inactivity;
+- temporary OAuth device credential forwarding through Chat/GitHub;
+- stale local watcher processes continuing to run after source updates.
+
+The repaired private reference implementation was revalidated with real OAuth recovery, user-token verification, two independent Mindnote reads, and an immediate keepalive check.
+
+See:
+
+- `runtime/README.md`
+- `history/2026-09-oauth-lifecycle-repair.md`
