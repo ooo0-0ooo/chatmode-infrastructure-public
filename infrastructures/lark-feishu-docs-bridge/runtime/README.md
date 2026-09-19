@@ -13,6 +13,7 @@ It is derived from the production implementation that was revalidated after the 
 - `supervisor-v2.mjs`
 - `startup.mjs`
 - `install-v2.mjs`
+- `activate-latest-v2.cmd`
 
 The repaired auth watcher implements:
 
