@@ -597,14 +597,30 @@ watcher log contains a parse/CLI error?
 
 目前最准确的描述是：
 
-**public deployment specification + parameterized configuration layer**
+**脱敏 runtime source + deployment specification + parameterized configuration layer**
 
-它**还不是**：
+Public repo 现在已经包含：
 
-**clone → run installer → fully working Lark bridge**
+- repaired ops/auth watcher；
+- supervisor / startup；
+- 参数化 installer；
+- mailbox / routing templates；
+- artifact carrier template；
+- portable environment example；
+- 故障、根因、修复与验收说明。
 
-缺失的是一个完全通用、与具体环境无关的 runtime implementation 和 installer。在获得授权的通用 runtime distribution 出现之前，使用者仍需要自行提供或实现兼容 Private runtime。
+但它仍然**不是 Public live service**，也不能直接承载你的私有 Lark mailbox / OAuth state。
 
+部署时仍需：
+
+1. 创建 Private runtime repo；
+2. 把 `runtime/` 和 `bridge/` 模板复制进去；
+3. 配置自己的 GitHub/Lark 环境；
+4. 建立 Private mailbox / asset branch；
+5. 完成 OAuth；
+6. 跑 smoke tests / reversible write / real image artifact 验收。
+
+所以它已经从“只有 specification”升级为“可公开分发的脱敏实现”，但 live data 与 secret 边界仍必须保持 Private。
 
 ---
 
