@@ -1,0 +1,11 @@
+{
+  "request_id": "chatgpt-YYYYMMDD-HHMM-write-01",
+  "operation": "lark.cli",
+  "intent": "write",
+  "write_authorized": true,
+  "args": [
+    "<allowed-root>",
+    "<explicit-mutating-subcommand>",
+    "<target>"
+  ]
+}
