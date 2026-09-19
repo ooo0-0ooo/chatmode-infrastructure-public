@@ -1,0 +1,118 @@
+name: Lark Bridge artifact carrier template
+
+on:
+  pull_request:
+    branches:
+      - assets
+    types:
+      - opened
+      - synchronize
+      - reopened
+      - closed
+    paths:
+      - bridge/carrier-request.json
+
+permissions:
+  contents: read
+
+jobs:
+  reconstruct:
+    if: github.event.action != 'closed' && startsWith(github.head_ref, 'qa/lark-artifact-')
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Reconstruct requested private bridge outputs
+        shell: bash
+        run: |
+          python - <<'PY'
+          import base64
+          import json
+          import pathlib
+          import re
+          import shutil
+
+          marker_path = pathlib.Path('bridge/carrier-request.json')
+          marker = json.loads(marker_path.read_text(encoding='utf-8'))
+
+          request_id = str(marker.get('request_id', ''))
+          if not re.fullmatch(r'[A-Za-z0-9._-]{1,180}', request_id):
+              raise SystemExit('invalid request_id')
+
+          outputs = marker.get('outputs')
+          if not isinstance(outputs, list) or not outputs or len(outputs) > 12:
+              raise SystemExit('outputs must be a non-empty list with at most 12 entries')
+
+          source_root = pathlib.Path('bridge/v2/ops-assets') / request_id
+          if not source_root.is_dir():
+              raise SystemExit(f'missing v2 asset directory: {source_root}')
+
+          out = pathlib.Path('lark-artifact-carrier')
+          if out.exists():
+              shutil.rmtree(out)
+          out.mkdir()
+
+          manifest = {'request_id': request_id, 'files': []}
+          total_bytes = 0
+
+          for item in outputs:
+              if not isinstance(item, dict):
+                  raise SystemExit('invalid output item')
+              key = str(item.get('key', ''))
+              filename = pathlib.Path(str(item.get('filename', ''))).name
+              if not re.fullmatch(r'[A-Za-z0-9._-]{1,120}', key):
+                  raise SystemExit(f'invalid key: {key!r}')
+              if not re.fullmatch(r'[A-Za-z0-9._-]{1,180}', filename):
+                  raise SystemExit(f'invalid filename: {filename!r}')
+
+              key_dir = source_root / key
+              parts = sorted(key_dir.glob('part-*.b64'))
+              if not parts or len(parts) > 200:
+                  raise SystemExit(f'no valid chunks for key {key}')
+
+              b64 = ''.join(p.read_text(encoding='utf-8').strip() for p in parts)
+              data = base64.b64decode(b64, validate=True)
+              total_bytes += len(data)
+              if total_bytes > 50 * 1024 * 1024:
+                  raise SystemExit('carrier exceeds 50 MiB total')
+
+              target = out / filename
+              target.write_bytes(data)
+              manifest['files'].append({
+                  'key': key,
+                  'filename': filename,
+                  'size_bytes': len(data),
+                  'chunks': len(parts),
+              })
+
+          (out / 'manifest.json').write_text(
+              json.dumps(manifest, ensure_ascii=False, indent=2),
+              encoding='utf-8',
+          )
+          print(json.dumps(manifest, ensure_ascii=False))
+          PY
+
+      - name: Upload Chat-readable artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: lark-artifact-carrier
+          path: lark-artifact-carrier/
+          if-no-files-found: error
+          retention-days: 1
+
+  cleanup:
+    if: github.event.action == 'closed' && startsWith(github.head_ref, 'qa/lark-artifact-')
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    permissions:
+      contents: write
+    steps:
+      - name: Delete temporary carrier branch
+        env:
+          GH_TOKEN: ${{ github.token }}
+          HEAD_REF: ${{ github.head_ref }}
+          REPO: ${{ github.repository }}
+        shell: bash
+        run: |
+          gh api --method DELETE "repos/${REPO}/git/refs/heads/${HEAD_REF}" || true
