@@ -2,34 +2,58 @@
 
 **[English](README.md) | 中文**
 
-这个目录描述了一个用于受控操作 Lark/Feishu 文档的 Chat-mode Bridge，在“可移植/可公开”层面的边界。
+本目录公开一套 Chat 模式受控读写 Lark/Feishu 文档 Bridge 的**脱敏、可移植版本**。
 
-私有实现可以通过 GitHub mailbox + 本地 watcher 调用已认证的 Lark 工具。Public 快照有意排除了已验证的 production watcher、真实 runtime branch、request/response 状态、OAuth 状态、binary asset 和项目特定 provenance。
+现在已经包含修复后的 watcher/supervisor runtime 源码（`runtime/`），以及部署指南、参数化配置、安全边界和脱敏后的故障/修复历史。
 
-## 使用指南
+Public repo 仍然刻意不包含 live private state：真实 mailbox 流量、OAuth credential、binary asset、真实 document ID、user/app identifier、private logs、截图和项目特定 provenance。
 
-从这个 Public source 到你自己普通 ChatGPT Chat 中真正可工作的 Bridge，包括 private runtime repo、本地依赖、Lark App/OAuth、mailbox contract、watcher/supervisor、binary transport、Chat 第一跳指令和 smoke test，完整步骤见：
+## 2026 年 9 月这次迭代修了什么
 
-- [English](USAGE_GUIDE.md)
-- [中文](USAGE_GUIDE.zh-CN.md)
+此前已经验收通过的 Bridge 在长时间闲置后失效，根因包括：
 
-## 可以公开分享的内容
+- token 只在真实 user API 调用时 lazy refresh，Bridge 闲置时 rotating refresh token 可能自然过期；
+- 旧 OAuth recovery 把临时 `device_code` 经 GitHub/Chat 转发，不符合当前 credential-safety，也不应进入 Git history；
+- GitHub 源码更新后，本机已经运行的旧 watcher 不会自动加载新版。
 
+修复后的 runtime 改为：
+
+- host-local `device_code`；
+- opaque `auth_session_id`；
+- `auth.finish_pending(auth_session_id)`；
+- `auth.health`；
+- `auth.keepalive`；
+- 周期性 token lifecycle 检查；
+- 可配置 refresh protection window；
+- runtime 激活后 installer 主动重启旧 supervisor。
+
+详见：
+
+- [runtime/](runtime/)
+- [故障与修复记录](history/2026-09-oauth-lifecycle-repair.zh-CN.md)
+- [English usage guide](USAGE_GUIDE.md)
+- [中文使用指南](USAGE_GUIDE.zh-CN.md)
+
+## Public 中包含
+
+- 脱敏后的 runtime source；
 - 通用架构和迁移说明；
 - 参数化环境变量示例；
-- 安全 gates 与权限模型；
-- 可移植安装/迁移说明。
+- 安全 gate / 权限模型；
+- OAuth lifecycle / recovery 设计；
+- troubleshooting / validation 指南；
+- 脱敏后的故障、根因、修复过程。
 
-## 刻意保持私有的内容
+## 刻意保持 Private 的内容
 
-- 如果仍然包含环境绑定默认值的 production `verified/` runtime code；
-- 真实 `ops-request`、`ops-response`、`auth-request` 或 `auth-response` 状态；
-- binary asset chunks 和重建文件；
-- OAuth/session 材料；
-- 真实 document ID、用户数据、截图、日志和 QA 证据。
+- live `ops-request`、`ops-response`、`auth-request`、`auth-response` 流量；
+- access token、refresh token、device code、host-local pending OAuth session、app secret；
+- binary asset chunks 和重建后的私有文件；
+- 真实 document ID、user ID、app ID、截图、日志和 private QA evidence；
+- 绑定具体环境的 production provenance。
 
 ## Runtime 隔离
 
-实际 Bridge 必须部署到 Private runtime repo/backend。不要把生产 Bridge 的实时 mailbox 指向这个 Public source repo。
+Public `runtime/` 可以作为源码使用，但真实 Bridge 必须部署到 **Private runtime repo/backend**。不要把 production live mailbox 指向这个 Public repo。
 
-通用配置层见 `portable/`。
+参数化配置示例见 `portable/`。
