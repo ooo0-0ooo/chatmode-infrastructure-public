@@ -1,0 +1,9 @@
+{
+  "request_id": "chatgpt-YYYYMMDD-HHMM-image-01",
+  "outputs": [
+    {
+      "key": "image",
+      "filename": "image.png"
+    }
+  ]
+}
