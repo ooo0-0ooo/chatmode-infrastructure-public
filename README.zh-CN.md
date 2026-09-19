@@ -10,7 +10,7 @@
 
 ### 1. Lark / Feishu 文档 Bridge
 
-用于把 Chat 工作流通过受控的本地执行 Bridge 连接到 Lark/Feishu 的参考架构。公开快照只包含可移植的迁移/配置层；生产 watcher、真实 mailbox 状态、OAuth 状态和已验证的生产基线不会公开。
+用于把 Chat 工作流通过受控的本地执行 Bridge 连接到 Lark/Feishu 的脱敏实现。Public 快照现在包含修复后的 watcher/supervisor runtime 源码、routing/mailbox 模板、artifact carrier 模板、参数化配置和脱敏后的 OAuth lifecycle 故障/修复历史；live mailbox 流量、OAuth secret、私有 binary、真实 identifier 和绑定具体环境的 production provenance 仍保持 Private。
 
 - [English usage guide](infrastructures/lark-feishu-docs-bridge/USAGE_GUIDE.md)
 - [中文使用指南](infrastructures/lark-feishu-docs-bridge/USAGE_GUIDE.zh-CN.md)
