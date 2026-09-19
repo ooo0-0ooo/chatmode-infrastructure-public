@@ -1,0 +1,22 @@
+# Runtime state / logs
+*.log
+*.lock
+.ops-v2-pending.json
+.auth-v2-pending.json
+.auth-v2-session.json
+
+# Local env / secrets
+.env
+.env.*
+!.env.example
+
+# Binary/private transport
+bridge/v2/ops-assets/
+bridge/carrier-request.json
+lark-artifact-carrier/
+
+# OS/editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
