@@ -6,11 +6,11 @@
 
 ## 这个 Public 目录提供什么
 
-这个 Public 目录是一份**部署与接入指南**，不是一个“一条命令即可安装”的完整 runtime。
+这个 Public 目录现在包含**脱敏 runtime 实现 + 部署/接入指南**。
 
-它包含公开架构边界和参数化的 `.env.example`，但有意**不公开** private production watcher 实现、live mailbox state、OAuth material、binary-asset transport state 和绑定具体环境的 verified runtime。
+修复后的 watcher/supervisor 源码已经发布在 `runtime/`；绑定具体环境的默认值、live mailbox state、OAuth material、private binary asset、真实 document/user/app identifier 和 production provenance 仍然不公开。
 
-要让这套 Bridge 真正在你自己的普通 ChatGPT Chat 中可用，你还需要一个实现下述 contract 的**兼容 Private runtime**。这个 runtime 可以由你自己实现，也可以来自你另外获得授权的实现。
+要让 Bridge 真正在普通 ChatGPT Chat 中可用，应把脱敏 runtime 部署到你自己的 **Private runtime repo/backend**，并配置自己的 GitHub/Lark 环境。不要直接把这个 Public repo 当作私有 Lark 数据的 live mailbox。
 
 目标状态：
 
@@ -117,7 +117,7 @@ bridge/
     lark-bridge-artifact-carrier.yml
 ```
 
-Public repo 不提供上面的 private watcher files；你的 compatible runtime 必须提供它们。
+把 `runtime/` 中的脱敏 watcher/supervisor 文件复制到 Private repo 的 `bridge/client/`。所有 live mailbox traffic 和 OAuth state 始终保持 Private。
 
 一种实用 branch 模型：
 
@@ -322,30 +322,51 @@ Watcher 还应：
 
 普通 ops watcher 不要暴露 unrestricted `auth`、`config`、`install` 或 shell command。
 
-独立 auth watcher 应只暴露很小的 typed surface，例如：
+修复后的 auth watcher 只暴露小型 typed surface：
 
 ```text
 auth.status
 auth.scopes
 auth.start
 auth.start_all
-auth.finish
+auth.finish_pending
+auth.health
+auth.keepalive
 ```
 
-典型 OAuth 恢复：
+### OAuth 恢复
+
+当前流程：
 
 ```text
-Chat detects invalid/missing user token
+Chat 检测 user token invalid/missing
   -> auth.start / auth.start_all
-  -> runtime returns the official Lark verification URL
-  -> user completes authorization in browser
-  -> user tells Chat authorization is complete
-  -> Chat sends auth.finish
-  -> runtime verifies token and real scopes
-  -> original document task resumes
+  -> local host 本地保存 Lark device_code
+  -> runtime 只返回官方 verification_url + opaque auth_session_id
+  -> 用户在浏览器完成授权
+  -> 用户告诉 Chat 已授权
+  -> Chat 发送 auth.finish_pending(auth_session_id)
+  -> local host 本地完成 device-code exchange
+  -> 删除本地 pending OAuth secret
+  -> auth.status 验证真实 token / scopes
+  -> 继续原 document task
 ```
 
-不要把 device-code history 保存到 Git。
+不要把 raw `device_code` 返回给 Chat，也不要写进 Git。旧的 `auth.finish(device_code)` mailbox contract 不应继续使用。
+
+### Token lifecycle keeper
+
+修复后的 reference runtime 会周期性检查本地 token metadata。默认策略：
+
+- 每 6 小时检查一次；
+- access token 需要 refresh 且 rotating refresh token 距离到期不足 72 小时时，在本地主机触发正常且已验证的 Lark CLI refresh 路径；
+- access/refresh token material 始终留在 host。
+
+这样可以避免 host 明明一直在线，但因为长时间没有 Lark document request 而让 rotating refresh-token 链自然断掉。
+
+如果 host 自身连续关机/离线时间超过上游 refresh-token 生命周期，仍可能需要重新 browser OAuth。
+
+浏览器授权页显示成功，不等于 local host 已经完成 token exchange；必须再用 `auth.status` 验证。
 
 ---
 
@@ -583,3 +604,23 @@ watcher log contains a parse/CLI error?
 **clone → run installer → fully working Lark bridge**
 
 缺失的是一个完全通用、与具体环境无关的 runtime implementation 和 installer。在获得授权的通用 runtime distribution 出现之前，使用者仍需要自行提供或实现兼容 Private runtime。
+
+
+---
+
+## 17. 2026 年 9 月 OAuth 生命周期修复
+
+当前 Public runtime 已包含一次真实 production 长期闲置 OAuth 故障后的修复。
+
+本轮处理了：
+
+- 只有 lazy refresh，导致长期不使用时 rotating refresh token 可能自然过期；
+- 临时 OAuth device credential 经 Chat/GitHub 转发；
+- GitHub source 更新后本机旧 watcher 仍继续运行。
+
+修复后的 private reference implementation 已经用真实 OAuth recovery、user-token verify、两份独立 Mindnote read 和即时 keepalive 检查重新验收。
+
+详见：
+
+- `runtime/README.zh-CN.md`
+- `history/2026-09-oauth-lifecycle-repair.zh-CN.md`
