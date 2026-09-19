@@ -7,7 +7,7 @@ const REPO = process.env.LARK_BRIDGE_SOURCE_REPO || process.env.LARK_BRIDGE_REPO
 const BRANCH = process.env.LARK_BRIDGE_SOURCE_BRANCH || process.env.LARK_BRIDGE_BRANCH || 'runtime';
 const DEFAULT_TARGET = process.env.LARK_BRIDGE_LOCAL_DIR || 'C:\\lark-chat-bridge';
 const SELF_DIR = dirname(fileURLToPath(import.meta.url));
-const TARGET = process.env.LARK_BRIDGE_LOCAL_DIR || (existsSync(DEFAULT_TARGET) ? DEFAULT_TARGET : SELF_DIR);
+const TARGET = process.env.LARK_BRIDGE_LOCAL_DIR || DEFAULT_TARGET;
 const LOG = join(TARGET, 'install-v2.log');
 const GH = process.env.GH_PATH || 'gh';
 
