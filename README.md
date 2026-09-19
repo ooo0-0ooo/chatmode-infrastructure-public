@@ -10,7 +10,7 @@ This public-source snapshot intentionally contains only portable implementations
 
 ### 1. Lark / Feishu document bridge
 
-A reference architecture for connecting Chat workflows to Lark/Feishu through a controlled local execution bridge. The public snapshot includes the portable migration/configuration layer only; production watchers, real mailbox state, OAuth state, and verified production baselines are not published.
+A sanitized implementation for connecting Chat workflows to Lark/Feishu through a controlled local execution bridge. The public snapshot now includes the repaired watcher/supervisor runtime source, routing/mailbox templates, artifact-carrier template, portable configuration, and a sanitized OAuth-lifecycle incident history. Live mailbox traffic, OAuth secrets, private binary data, identifiers, and environment-bound production provenance remain private.
 
 - [English usage guide](infrastructures/lark-feishu-docs-bridge/USAGE_GUIDE.md)
 - [中文使用指南](infrastructures/lark-feishu-docs-bridge/USAGE_GUIDE.zh-CN.md)
