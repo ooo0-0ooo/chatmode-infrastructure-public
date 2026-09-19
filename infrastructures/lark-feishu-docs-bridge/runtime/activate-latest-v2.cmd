@@ -6,7 +6,7 @@ if "%LARK_BRIDGE_SOURCE_REPO%"=="" (
   exit /b 2
 )
 
-if "%LARK_BRIDGE_SOURCE_BRANCH%"=="" set "LARK_BRIDGE_SOURCE_BRANCH=runtime"
+if "%LARK_BRIDGE_SOURCE_BRANCH%"=="" set "LARK_BRIDGE_SOURCE_BRANCH=main"
 
 set "TMPFILE=%TEMP%\lark-bridge-install-v2-%RANDOM%.mjs"
 
