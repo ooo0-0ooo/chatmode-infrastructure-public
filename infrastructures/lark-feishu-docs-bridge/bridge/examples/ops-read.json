@@ -1,0 +1,12 @@
+{
+  "request_id": "chatgpt-YYYYMMDD-HHMM-read-01",
+  "operation": "lark.cli",
+  "intent": "read",
+  "args": [
+    "mindnotes",
+    "nodes",
+    "list",
+    "--mindnote-id",
+    "<mindnote-token>"
+  ]
+}
